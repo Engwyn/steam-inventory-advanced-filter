@@ -4,8 +4,8 @@
 // @version      1.0.0
 // @description  Advanced URL-configurable Steam inventory filter for Tampermonkey/Violentmonkey. Batch filter trading cards, emoticons, backgrounds by game, rarity, and marketability with simple URL parameters.
 // @author       Engwyn & Contributors
-// @match        https://steamcommunity.com/id/*/inventory/*
-// @match        https://steamcommunity.com/profiles/*/inventory/*
+// @match        https://steamcommunity.com/id/*/inventory*
+// @match        https://steamcommunity.com/profiles/*/inventory*
 // @grant        none
 // @run-at       document-idle
 // @license      MIT
@@ -57,6 +57,11 @@
       untradable: 'tag_filter_753_6_misc_untradable'
     }
   };
+
+  // Check if current URL is an inventory page
+  function isInventoryPage() {
+    return /\/inventory/.test(location.pathname);
+  }
 
   // Parse URL parameters
   function parseUrlFilters() {
@@ -111,6 +116,80 @@
     return Object.keys(filters).length > 0 ? filters : null;
   }
 
+  // Navigate to Steam inventory category (AppID 753)
+  async function ensureSteamCategory() {
+    return new Promise(resolve => {
+      const checkInterval = setInterval(() => {
+        // Check if we're already on Steam category
+        const steamTab = document.querySelector('#inventory_link_753');
+        if (steamTab && steamTab.classList.contains('active')) {
+          clearInterval(checkInterval);
+          resolve();
+          return;
+        }
+
+        // Look for Steam inventory tab and click it
+        if (steamTab) {
+          console.log('Steam Inventory Filter: Switching to Steam category');
+          steamTab.click();
+          clearInterval(checkInterval);
+          // Wait a bit for the category to switch
+          setTimeout(resolve, 800);
+          return;
+        }
+
+        // If Steam tab not found, continue anyway (might be single-game inventory)
+        if (document.querySelector('.inventory_page')) {
+          clearInterval(checkInterval);
+          resolve();
+        }
+      }, 300);
+
+      // Timeout after 10 seconds
+      setTimeout(() => {
+        clearInterval(checkInterval);
+        resolve();
+      }, 10000);
+    });
+  }
+
+  // Switch to Community items context if needed
+  async function ensureCommunityContext() {
+    return new Promise(resolve => {
+      const checkInterval = setInterval(() => {
+        // Check if we're already on Community items context (753_6)
+        if (location.hash.includes('753_6')) {
+          clearInterval(checkInterval);
+          resolve();
+          return;
+        }
+
+        // Look for Community items context option
+        const communityOption = document.querySelector('#context_option_753_6');
+        if (communityOption) {
+          console.log('Steam Inventory Filter: Switching to Community items context');
+          communityOption.click();
+          clearInterval(checkInterval);
+          // Wait a bit for the context to switch
+          setTimeout(resolve, 500);
+          return;
+        }
+
+        // If no specific context found but we're on inventory page, continue anyway
+        if (document.querySelector('.inventory_page')) {
+          clearInterval(checkInterval);
+          resolve();
+        }
+      }, 300);
+
+      // Timeout after 10 seconds
+      setTimeout(() => {
+        clearInterval(checkInterval);
+        resolve();
+      }, 10000);
+    });
+  }
+
   // Wait for filter toggle button
   function waitForFilterToggle() {
     return new Promise(resolve => {
@@ -158,6 +237,12 @@
     if (!filters) return;
 
     try {
+      // Navigate to Steam category first (AppID 753)
+      await ensureSteamCategory();
+
+      // Ensure we're on Community items context for community-specific filters
+      await ensureCommunityContext();
+
       // Expand filter panel
       const toggleBtn = await waitForFilterToggle();
       toggleBtn.click();
@@ -223,20 +308,27 @@
     }
   }
 
-  // Handle SPA navigation
+  // Handle SPA navigation and hash changes
   let lastUrl = location.href;
   const observer = new MutationObserver(() => {
     if (location.href !== lastUrl) {
       lastUrl = location.href;
-      if (/\/inventory\/?(\?|$)/.test(location.pathname + location.search)) {
+      if (isInventoryPage()) {
         setTimeout(applyFilters, 1000);
       }
     }
   });
   observer.observe(document.body, { subtree: true, childList: true });
 
+  // Listen for hash changes (when Steam switches inventory contexts)
+  window.addEventListener('hashchange', () => {
+    if (isInventoryPage()) {
+      setTimeout(applyFilters, 1000);
+    }
+  });
+
   // Initial execution
-  if (/\/inventory\/?(\?|$)/.test(location.pathname + location.search)) {
+  if (isInventoryPage()) {
     applyFilters();
   }
 })();

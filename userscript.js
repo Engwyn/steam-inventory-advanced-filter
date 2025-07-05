@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Steam Inventory Advanced Filter
 // @namespace    https://github.com/Engwyn/steam-inventory-advanced-filter
-// @version      1.0.0
+// @version      1.0.1
 // @description  Advanced URL-configurable Steam inventory filter for Tampermonkey/Violentmonkey. Batch filter trading cards, emoticons, backgrounds by game, rarity, and marketability with simple URL parameters.
 // @author       Engwyn & Contributors
 // @match        https://steamcommunity.com/id/*/inventory*
@@ -11,6 +11,8 @@
 // @license      MIT
 // @homepageURL  https://github.com/Engwyn/steam-inventory-advanced-filter
 // @supportURL   https://github.com/Engwyn/steam-inventory-advanced-filter/issues
+// @updateURL    https://raw.githubusercontent.com/Engwyn/steam-inventory-advanced-filter/refs/heads/main/userscript.js
+// @downloadURL  https://raw.githubusercontent.com/Engwyn/steam-inventory-advanced-filter/refs/heads/main/userscript.js
 // ==/UserScript==
 
 (function () {

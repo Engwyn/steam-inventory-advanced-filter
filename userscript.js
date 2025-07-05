@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Steam Inventory Advanced Filter
 // @namespace    https://github.com/Engwyn/steam-inventory-advanced-filter
-// @version      1.0.1
+// @version      1.0.2
 // @description  Advanced URL-configurable Steam inventory filter for Tampermonkey/Violentmonkey. Batch filter trading cards, emoticons, backgrounds by game, rarity, and marketability with simple URL parameters.
 // @author       Engwyn & Contributors
 // @match        https://steamcommunity.com/id/*/inventory*
@@ -67,7 +67,14 @@
 
   // Parse URL parameters
   function parseUrlFilters() {
-    const params = new URLSearchParams(window.location.search);
+    // Handle URLs with hash fragments before query parameters
+    // e.g., #244850?appids=...&types=trading-card#753_0
+    const fullUrl = window.location.href;
+    const queryMatch = fullUrl.match(/\?([^#]*)/);
+
+    if (!queryMatch) return null;
+
+    const params = new URLSearchParams(queryMatch[1]);
     const filters = {};
 
     // App IDs (comma-separated)
